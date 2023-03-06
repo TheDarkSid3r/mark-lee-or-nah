@@ -1,5 +1,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
+import ChoiceButton from "./components/ChoiceButton.vue";
 import { marklee } from "./marklee";
 
 const sizes = [[240, 360], [240, 160], [281, 360], [246, 360], [252, 360], [236, 360], [268, 360], [294, 360], [238, 240], [240, 234], [240, 235], [240, 240], [235, 360], [239, 360], [257, 360], [241, 360], [291, 360], [240, 680], [288, 360], [253, 360], [233, 360], [231, 360], [248, 360], [960, 720], [640, 960], [639, 960], [720, 960], [960, 640], [1366, 1372], [1344, 2015], [1365, 1356], [1343, 2015], [1440, 960], [1345, 2015], [641, 960], [1333, 1344], [960, 641]];
@@ -33,7 +34,8 @@ export default defineComponent({
     methods: {
         setup() {
             this.isMarkLee = Math.random() < 0.25;
-            if (this.isMarkLee) this.load(marklee[Math.floor(Math.random() * marklee.length)]);
+            if (this.isMarkLee)
+                this.load(marklee[Math.floor(Math.random() * marklee.length)]);
             else {
                 const size = sizes[Math.floor(Math.random() * sizes.length)];
                 this.load(`https://picsum.photos/seed/${Date.now()}/${size[0]}/${size[1]}`);
@@ -52,32 +54,23 @@ export default defineComponent({
         },
         drawImage() {
             const ctx = this.context;
-            const { width: canvasWidth, height: canvasHeight } = ctx.canvas;
-
+            const canvas = ctx.canvas;
+            const maxWidth = 350, maxHeight = 350;
             const image = this.image;
             const { width: imageWidth, height: imageHeight } = image;
-
-            const scale = Math.min(canvasWidth / imageWidth, canvasHeight / imageHeight),
-                newWidth = imageWidth * scale,
-                newHeight = imageHeight * scale,
-                newX = canvasWidth / 2 - newWidth / 2,
-                newY = canvasHeight / 2 - newHeight / 2;
-
-            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-            ctx.save();
-            ctx.beginPath();
-            // amplify throws build error saying roundRect doesn't exist
-            // @ts-ignore
-            ctx.roundRect(newX, newY, newWidth, newHeight, 15);
-            ctx.closePath();
-            ctx.clip();
-            ctx.drawImage(this.image, newX, newY, newWidth, newHeight);
-            ctx.restore();
+            const scale = Math.min(maxWidth / imageWidth, maxHeight / imageHeight), newWidth = imageWidth * scale, newHeight = imageHeight * scale;
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            ctx.clearRect(0, 0, newWidth, newHeight);
+            ctx.drawImage(this.image, 0, 0, newWidth, newHeight);
         },
         answer(markLee: boolean) {
+            if (this.isLoading) return;
             this.wasCorrect = markLee === this.isMarkLee;
-            if (this.wasCorrect) this.score++;
-            else if (this.score > 0) this.score--;
+            if (this.wasCorrect)
+                this.score++;
+            else if (this.score > 0)
+                this.score--;
             if (this.score > this.highScore) {
                 this.highScore = this.score;
                 localStorage.setItem("mlhighscore", this.highScore.toString());
@@ -94,7 +87,8 @@ export default defineComponent({
     mounted() {
         this.setup();
         this.image.addEventListener("load", this.loaded);
-    }
+    },
+    components: { ChoiceButton }
 });
 </script>
 
@@ -118,9 +112,9 @@ export default defineComponent({
             </div>
         </div>
         <div class="choices" :class="{ disabled: isLoading }">
-            <button @click="answer(true)" :disabled="isLoading">MARK LEE</button>
+            <ChoiceButton @click="answer(true)">MARK LEE</ChoiceButton>
             <div class="or">OR</div>
-            <button @click="answer(false)" :disabled="isLoading">NAH</button>
+            <ChoiceButton @click="answer(false)">NAH</ChoiceButton>
         </div>
     </div>
 </template>
@@ -166,13 +160,17 @@ export default defineComponent({
         width: 350px;
         height: 350px;
         position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
 
         &>canvas {
             position: relative;
             z-index: 1;
-            transition: all 0.3s ease-out;
+            transition: opacity 0.2s ease-out, transform 0.3s ease-out;
             opacity: 1;
             transform: none;
+            border-radius: 15px;
         }
 
         &>.result {
@@ -186,7 +184,7 @@ export default defineComponent({
             transform: translate(-50%, -50%) scale(0.8);
             pointer-events: none;
             border-radius: 15px;
-            transition: all 0.2s ease-out;
+            transition: opacity 0.2s ease-out, transform 0.2s ease-out;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -234,6 +232,7 @@ export default defineComponent({
             &>.result {
                 opacity: 1;
                 transform: translate(-50%, -50%);
+                transition: transform 0.2s ease-out;
             }
         }
     }
@@ -244,10 +243,6 @@ export default defineComponent({
         justify-content: center;
         opacity: 1;
         transition: opacity 0.2s ease-out;
-
-        &.disabled {
-            opacity: 0.2;
-        }
 
         &>button {
             flex-shrink: 0;
@@ -262,20 +257,24 @@ export default defineComponent({
             color: #fff;
             margin: 4px;
             text-align: center;
+        }
 
-            &:disabled {
+        &.disabled {
+            opacity: 0.2;
+
+            &>button {
                 cursor: default;
             }
+        }
 
-            &:not(:disabled) {
-                &:hover {
-                    background: #111;
-                }
+        &:not(.disabled)>button {
+            &.hover {
+                background: #111;
+            }
 
-                &:active {
-                    background: #fff;
-                    color: #000;
-                }
+            &.active {
+                background: #fff;
+                color: #000;
             }
         }
 
