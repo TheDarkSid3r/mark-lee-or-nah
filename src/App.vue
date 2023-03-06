@@ -19,7 +19,6 @@ export default defineComponent({
         highScore: number;
     } {
         const highScore = localStorage.getItem("mlhighscore");
-        console.log(highScore);
         return {
             isMarkLee: false,
             isLoading: true,
