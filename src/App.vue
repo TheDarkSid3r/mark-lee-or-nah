@@ -66,6 +66,8 @@ export default defineComponent({
             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
             ctx.save();
             ctx.beginPath();
+            // amplify throws build error saying roundRect doesn't exist
+            // @ts-ignore
             ctx.roundRect(newX, newY, newWidth, newHeight, 15);
             ctx.closePath();
             ctx.clip();
