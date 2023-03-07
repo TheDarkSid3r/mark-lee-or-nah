@@ -76,10 +76,8 @@ export default defineComponent({
         answer(markLee: boolean) {
             if (this.isLoading) return;
             this.wasCorrect = markLee === this.isMarkLee;
-            if (this.wasCorrect)
-                this.score++;
-            else if (this.score > 0)
-                this.score--;
+            if (this.wasCorrect) this.score++;
+            else this.score = 0;
             if (this.score > this.highScore) {
                 this.highScore = this.score;
                 localStorage.setItem("mlhighscore", this.highScore.toString());
